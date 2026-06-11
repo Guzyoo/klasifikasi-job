@@ -29,26 +29,32 @@
             $keyakinan = $data['data']['keyakinan'] ?? '0';
             $alasan = $data['data']['alasan'] ?? 'Tidak ada analisis yang dapat ditampilkan.';
             $urlSumber = $data['url_sumber'] ?? null;
+            
+            // Tangkap data ekstraksi baru dari AI
+            $deskripsi = $data['data']['deskripsi_pekerjaan'] ?? ['Tidak disebutkan'];
+            $kriteria = $data['data']['kriteria'] ?? ['Tidak disebutkan'];
+            $gaji = $data['data']['rentang_gaji'] ?? 'Tidak disebutkan';
 
-            // Atur Tema Warna (Sekarang nama class Tailwind ditulis UTUH biar terbaca mesin)
             if (str_contains($status, 'PALSU') || str_contains($status, 'SCAM')) {
                 $bgBox = 'bg-red-50 border-red-200';
                 $iconBox = 'bg-red-100 text-red-600';
                 $textStatus = 'text-red-700';
                 $dotKeyakinan = 'bg-red-500 shadow-red-300';
-                $icon = 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z'; // Icon Warning
+                $icon = 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z'; 
             } else {
                 $bgBox = 'bg-green-50 border-green-200';
                 $iconBox = 'bg-green-100 text-green-600';
                 $textStatus = 'text-green-700';
                 $dotKeyakinan = 'bg-green-500 shadow-green-300';
-                $icon = 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'; // Icon Check
+                $icon = 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'; 
             }
-        @endphp <div class="bg-white rounded-3xl shadow-xl shadow-slate-200/50 p-8 md:p-12 border border-slate-100 relative overflow-hidden">
+        @endphp 
+
+        <div class="bg-white rounded-3xl shadow-xl shadow-slate-200/50 p-8 md:p-12 border border-slate-100 relative overflow-hidden">
             
             <div class="text-center mb-10 relative z-10">
                 <h2 class="text-2xl font-extrabold mb-2">Laporan Analisis AI</h2>
-                <p class="text-slate-500">Hasil deteksi kecerdasan buatan dari data yang diunggah.</p>
+                <p class="text-slate-500">Hasil ekstraksi dan deteksi kecerdasan buatan.</p>
             </div>
 
             <div class="rounded-3xl p-8 border-2 {{ $bgBox }} mb-10 text-center relative z-10 shadow-sm">
@@ -69,10 +75,54 @@
                 </div>
             </div>
 
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10 relative z-10">
+                <div class="p-6 bg-blue-50/50 rounded-2xl border border-blue-100">
+                    <h4 class="font-bold text-blue-900 mb-3 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                        Deskripsi Pekerjaan
+                    </h4>
+                    <ul class="list-disc list-inside text-slate-700 space-y-1 text-sm">
+                        @if(is_array($deskripsi))
+                            @foreach($deskripsi as $desc)
+                                <li>{{ $desc }}</li>
+                            @endforeach
+                        @else
+                            <li>{{ $deskripsi }}</li>
+                        @endif
+                    </ul>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="p-6 bg-amber-50/50 rounded-2xl border border-amber-100">
+                        <h4 class="font-bold text-amber-900 mb-3 flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                            Kriteria & Syarat
+                        </h4>
+                        <ul class="list-disc list-inside text-slate-700 space-y-1 text-sm">
+                            @if(is_array($kriteria))
+                                @foreach($kriteria as $krit)
+                                    <li>{{ $krit }}</li>
+                                @endforeach
+                            @else
+                                <li>{{ $kriteria }}</li>
+                            @endif
+                        </ul>
+                    </div>
+
+                    <div class="p-6 bg-emerald-50/50 rounded-2xl border border-emerald-100">
+                        <h4 class="font-bold text-emerald-900 mb-1 flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            Rentang Gaji
+                        </h4>
+                        <p class="text-slate-800 font-semibold text-lg">{{ $gaji }}</p>
+                    </div>
+                </div>
+            </div>
+
             <div class="space-y-6 relative z-10">
                 <h3 class="font-bold text-xl border-b border-slate-100 pb-3 flex items-center gap-2">
-                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    Detail Analisis Gemini
+                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Detail Analisis & Alasan
                 </h3>
                 
                 <div class="p-6 bg-slate-50/80 rounded-2xl border border-slate-200 shadow-sm">

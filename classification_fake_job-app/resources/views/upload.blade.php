@@ -17,7 +17,7 @@
                 <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-blue-200">G</div>
                 <span class="text-xl font-bold tracking-tight">Gemini<span class="text-blue-600">Checker</span></span>
             </div>
-            <div class="text-sm font-medium text-slate-500 italic">Project Tugas Akhir - UNMA</div>
+            <div class="text-sm font-medium text-slate-500 italic">Job Checker</div>
         </div>
     </nav>
 

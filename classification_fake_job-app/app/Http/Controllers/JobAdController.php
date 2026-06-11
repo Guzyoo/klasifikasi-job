@@ -4,11 +4,17 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http; // Wajib dipanggil untuk nembak API
+use App\Models\JobAnalysis;
 
 class JobAdController
 {
     public function analyze(Request $request)
     {
+        set_time_limit(180);
+        
+        if ($request->hasFile('job_file') && !$request->file('job_file')->isValid()) {
+            dd('ALASAN ASLI PHP NOLAK: ' . $request->file('job_file')->getErrorMessage());
+        }
         // 1. VALIDASI INPUT (Biar user fleksibel, tapi nggak boleh kosong semua)
         $request->validate([
             'job_file' => 'nullable|file|mimes:jpeg,png,jpg,mp4|max:10240', // Max 10MB
@@ -21,12 +27,11 @@ class JobAdController
         }
 
         // 2. SIAPKAN PENGIRIMAN KE FASTAPI 
-        // (Pastikan URL ini sesuai dengan port server Python lu nanti)
         $fastApiUrl = 'http://127.0.0.1:8001/analyze'; 
-        
+
         try {
             // Kita paksa kurirnya selalu pakai format Multipart Form Data
-            $client = Http::timeout(60)->asMultipart(); 
+            $client = Http::timeout(180)->asMultipart(); 
 
             // 1. Kalau ada file, baru kita pakai attach()
             if ($request->hasFile('job_file')) {
@@ -45,6 +50,35 @@ class JobAdController
             // 3. TANGANI HASIL DARI AI
             if ($response->successful()) {
                 $result = $response->json();
+
+                // =========================================================
+                // [+] FITUR BARU: SIMPAN KE DATABASE BUAT EVALUASI SKRIPSI
+                // =========================================================
+                try {
+                    $inputType = 'text';
+                    $filePath = null;
+
+                    if ($request->hasFile('job_file')) {
+                        $inputType = 'file';
+                        // Simpan gambar ke folder public/storage/job_files
+                        $filePath = $request->file('job_file')->store('job_files', 'public');
+                    } elseif ($request->filled('job_link')) {
+                        $inputType = 'link';
+                    }
+
+                    // Tembak ke Database!
+                    JobAnalysis::create([
+                        'file_path' => $filePath,
+                        'type' => $inputType,
+                        'result' => $result['data']['status'] ?? 'ERROR',
+                        'actual' => null // Kosongin dulu, nanti lu isi pas mau ngitung F1 Score
+                    ]);
+                } catch (\Exception $dbError) {
+                    // Kalau database gagal nyimpen, biarin aja lewat, jangan sampe user kena error
+                    \Log::error('Gagal simpan ke DB: ' . $dbError->getMessage());
+                }
+                // =========================================================
+
                 return view('result', ['data' => $result]);
             } else {
                 $errorMsg = $response->json('detail') ?? 'Waduh, server AI gagal merespons.';
@@ -52,9 +86,8 @@ class JobAdController
             }
 
         } catch (\Exception $e) {
-            // JURUS ANTI TEBAK-TEBAKAN: 
-            // Kita tampilin pesan error aslinya dari Laravel biar ketahuan kalau dia ngambek lagi!
+            // JURUS ANTI TEBAK-TEBAKAN
             return back()->with('error', 'Crash di Laravel: ' . $e->getMessage());
         }
     }
-} 
+}

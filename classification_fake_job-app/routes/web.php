@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\JobAdController;
+use App\Http\Controllers\AdminController;
 
 // Halaman utama
 Route::get('/', function () {
@@ -14,3 +15,6 @@ Route::post('/analyze', [JobAdController::class, 'analyze'])->name('analyze.job'
 Route::get('/result', function () {
     return view('result');
 })->name('result.page');
+
+Route::get('/admin', [AdminController::class, 'index']);
+Route::post('/admin/validate/{id}', [AdminController::class, 'validateData'])->name('admin.validate');
