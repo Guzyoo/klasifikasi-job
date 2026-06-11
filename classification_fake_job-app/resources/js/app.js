@@ -1,14 +1,25 @@
 import './bootstrap';
 
+const MAX_UPLOAD_SIZE_BYTES = 50 * 1024 * 1024;
+
 // Daftarkan ke 'window' agar bisa dibaca oleh file Blade (HTML)
 window.previewFile = function() {
-    const file = document.getElementById('job_file').files[0];
+    const input = document.getElementById('job_file');
+    const file = input.files[0];
     const previewContainer = document.getElementById('preview-container');
     const placeholder = document.getElementById('placeholder-content');
     const previewImage = document.getElementById('preview-image');
     const previewVideo = document.getElementById('preview-video');
 
     if (file) {
+        if (file.size > MAX_UPLOAD_SIZE_BYTES) {
+            alert('Ukuran file maksimal 50 MB.');
+            input.value = "";
+            previewContainer.classList.add('hidden');
+            placeholder.classList.remove('hidden');
+            return;
+        }
+
         previewContainer.classList.remove('hidden');
         placeholder.classList.add('hidden');
 
