@@ -13,7 +13,12 @@ class JobAdController
         set_time_limit(180);
 
         if ($this->requestExceedsPostLimit($request)) {
-            return back()->with('error', 'Ukuran upload terlalu besar. Maksimal video yang didukung adalah 50 MB. Jika masih gagal, pastikan upload_max_filesize dan post_max_size PHP sudah dinaikkan.');
+            return back()->with('error', 'Ukuran total request melebihi batas PHP yang aktif. File diterima: ' . $this->formatBytes((int) $request->server('CONTENT_LENGTH', 0)) . '. Batas post_max_size: ' . ini_get('post_max_size') . '.');
+        }
+
+        $uploadedFile = $request->file('job_file');
+        if ($uploadedFile && !$uploadedFile->isValid()) {
+            return back()->with('error', 'Upload file gagal: ' . $this->uploadErrorMessage($uploadedFile->getError()) . ' Kode error PHP: ' . $uploadedFile->getError() . '. Limit aktif: upload_max_filesize=' . ini_get('upload_max_filesize') . ', post_max_size=' . ini_get('post_max_size') . '.');
         }
 
         // 1. VALIDASI INPUT (Biar user fleksibel, tapi nggak boleh kosong semua)
@@ -51,7 +56,8 @@ class JobAdController
                 $client = $client->attach(
                     'file',
                     $fileStream,
-                    $file->getClientOriginalName()
+                    $file->getClientOriginalName(),
+                    ['Content-Type' => $file->getMimeType() ?: $file->getClientMimeType()]
                 );
             }
 
@@ -132,5 +138,31 @@ class JobAdController
             'k' => (int) ($value * 1024),
             default => (int) $value,
         };
+    }
+
+    private function uploadErrorMessage(int $errorCode): string
+    {
+        return match ($errorCode) {
+            UPLOAD_ERR_INI_SIZE => 'Ukuran file melebihi upload_max_filesize di konfigurasi PHP.',
+            UPLOAD_ERR_FORM_SIZE => 'Ukuran file melebihi batas MAX_FILE_SIZE dari form.',
+            UPLOAD_ERR_PARTIAL => 'File hanya terupload sebagian. Coba upload ulang dengan koneksi yang stabil.',
+            UPLOAD_ERR_NO_FILE => 'Tidak ada file yang diterima server.',
+            UPLOAD_ERR_NO_TMP_DIR => 'Folder temporary upload PHP tidak tersedia.',
+            UPLOAD_ERR_CANT_WRITE => 'Server gagal menulis file upload ke disk.',
+            UPLOAD_ERR_EXTENSION => 'Upload dihentikan oleh ekstensi PHP.',
+            default => 'PHP menolak file upload.',
+        };
+    }
+
+    private function formatBytes(int $bytes): string
+    {
+        if ($bytes <= 0) {
+            return '0 B';
+        }
+
+        $units = ['B', 'KB', 'MB', 'GB'];
+        $power = min((int) floor(log($bytes, 1024)), count($units) - 1);
+
+        return round($bytes / (1024 ** $power), 2) . ' ' . $units[$power];
     }
 }
